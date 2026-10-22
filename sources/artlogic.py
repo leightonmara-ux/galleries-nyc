@@ -21,7 +21,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin
 
-from .common import clean, get, opening, parse_date, parse_range, parse_time_range, today
+from .common import clean, get, opening, parse_date, parse_range, parse_time_range, refreshments, today, access as access_of
 
 SOURCE = {"id": "artlogic", "name": "Gallery websites", "url": "https://artlogic.net/"}
 
@@ -43,6 +43,7 @@ GALLERIES = [
     ("jamescohan", "James Cohan", "https://www.jamescohan.com", "Tribeca / SoHo"),
     ("kreps", "Andrew Kreps Gallery", "https://www.andrewkreps.com", "Tribeca / SoHo"),
     ("alexandergray", "Alexander Gray Associates", "https://www.alexandergray.com", "Tribeca / SoHo"),
+    ("nicolavassell", "Nicola Vassell", "https://www.nicolavassell.com", "Chelsea"),
     ("tibordenagy", "Tibor de Nagy", "https://www.tibordenagy.com", "Downtown"),
     ("fortgansevoort", "Fort Gansevoort", "https://www.fortgansevoort.com", "Downtown"),
 ]
@@ -101,10 +102,10 @@ def listings(g):
         if not (h2 and date):
             continue
         where = re.search(r'<span class="subtitle">(.*?)</span>', body, re.S)
-        shows.append(_show(site, href, clean(h2.group(1)), date.group(1), where and where.group(1)))
+        shows.append(_show(site, href, clean(h2.group(1)), date.group(1), where and where.group(1), body))
     # Exhibit-E template
-    for href, body in re.findall(r'<a href="(/exhibitions/[^"]+)">(?:(?!</a>).)*?<div class="headers">(.*?)</div>',
-                                 page, re.S):
+    for href, img, body in re.findall(r'<a href="(/exhibitions/[^"]+)">((?:(?!</a>).)*?)<div class="headers">(.*?)</div>',
+                                      page, re.S):
         heads = re.findall(r"<(h[123])([^>]*)>(.*?)</\1>", body, re.S)
         artist = [clean(t) for h, a, t in heads if h == "h1"]
         titles = [clean(t) for h, a, t in heads if h == "h2" and "subtitle" not in a]
@@ -112,15 +113,17 @@ def listings(g):
         dates = [t for h, a, t in heads if h == "h3"]
         if not dates:
             continue
+        if not titles and where and not re.search(r"\d", where[0]) and not ELSEWHERE.search(where[0]):
+            titles, where = where[:1], where[1:]  # some sites put the show title in the subtitle
         title = ": ".join(x for x in (artist[:1] + titles[:1]) if x)
-        shows.append(_show(site, href, title, dates[0], where[0] if where else ""))
+        shows.append(_show(site, href, title, dates[0], where[0] if where else "", img))
     # classic, list layout (Hollis Taggart): heading_title / location / dates spans
     for href, body in re.findall(r'<a href="(/exhibitions/[^"]+)">(.*?)</a>', page, re.S):
         title = re.search(r'class="heading_title">(.*?)</span>', body, re.S)
         date = re.search(r'class="dates[^"]*">(.*?)</div>', body, re.S)
         if title and date:
             where = re.search(r'class="location[^"]*">(.*?)</div>', body, re.S)
-            shows.append(_show(site, href, clean(title.group(1)), date.group(1), where and where.group(1)))
+            shows.append(_show(site, href, clean(title.group(1)), date.group(1), where and where.group(1), body))
     seen, out = set(), []
     for s in shows:
         if s["url"] in seen or not s["title"] or (s["where"] and ELSEWHERE.search(s["where"])):
@@ -130,15 +133,21 @@ def listings(g):
     return out
 
 
-def _show(site, href, title, dates, where):
+def _show(site, href, title, dates, where, markup=""):
     start, end = parse_range(clean(dates))
     return {"title": title, "url": urljoin(site + "/", href), "start": start, "end": end,
-            "where": clean(where or "")}
+            "where": clean(where or ""), "image": _thumb(markup)}
+
+
+def _thumb(markup):
+    """The listing's image, resized by Artlogic's image server to a small square."""
+    m = re.search(r'(https://static-assets\.artlogic\.net/)[^/\s"\']+(/[^\s"\']+?\.(?:jpe?g|png|webp))', markup or "", re.I)
+    return m.group(1) + "w_240,h_240,c_lfill,q_auto" + m.group(2) if m else None
 
 
 def _with_reception(g, s):
     gid, name, site, hood = g
-    day, t0, t1, confirmed = s["start"], None, None, False
+    day, t0, t1, confirmed, drinks, entry = s["start"], None, None, False, None, None
     try:
         text = clean(re.sub(r"<script.*?</script>|<style.*?</style>", " ", get(s["url"]), flags=re.S))
         for sentence in RECEPTION.findall(text):
@@ -150,8 +159,10 @@ def _with_reception(g, s):
                 day = d
             t0, t1, confirmed = a, b, True
             break
+        drinks, entry = refreshments(text), access_of(text)
     except Exception:
         pass  # the listing still shows, just without a confirmed time
     where = s["where"] if re.search(r"\d", s["where"]) else ""
     return opening(title=s["title"], venue=name, date=day, start=t0, end=t1, neighborhood=hood,
-                   address=where, url=s["url"], venue_url=site, closes=s["end"], confirmed=confirmed)
+                   address=where, url=s["url"], venue_url=site, closes=s["end"], confirmed=confirmed,
+                   image=s["image"], refreshments=drinks, access=entry)

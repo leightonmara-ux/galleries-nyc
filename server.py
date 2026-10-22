@@ -17,14 +17,15 @@ from concurrent.futures import ThreadPoolExecutor
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import buzz
 from sources.common import now
 
 ROOT = Path(__file__).parent
 CACHE = ROOT / "cache.json"
 STATIC = ROOT / "static"
 # Listed first wins on conflicts: Artguide has the best times and neighborhoods.
-SOURCES = ["artguide", "artcards", "artlogic"]
-DAYS = 21  # how far ahead to list openings
+SOURCES = ["artguide", "artcards", "zwirner", "alminerech", "artlogic"]
+DAYS = 45  # how far ahead to list openings: far enough to plan November in October
 TTL = 60 * 60  # seconds between refreshes
 
 _lock = threading.Lock()
@@ -53,8 +54,10 @@ def scrape_all():
             old = prev.get(s["id"])
             if s["error"] and old and old.get("openings"):
                 sources[i] = {**old, "error": s["error"], "stale": True}
+    stops = merge(sources)
+    add_buzz(stops)
     data = {"updated": now().isoformat(timespec="minutes"), "fetched_at": time.time(),
-            "sources": sources, "stops": merge(sources)}
+            "sources": sources, "stops": stops}
     CACHE.write_text(json.dumps(data))
     return data
 
@@ -105,12 +108,33 @@ def merge(sources):
                 # The gallery's own site knows its closing date better than a listing site does.
                 if o["closes"] and (not same["closes"] or src["id"] == "artlogic"):
                     same["closes"] = o["closes"]
-                same.setdefault("links", [])
+                same["image"] = same["image"] or o["image"]
+                same["refreshments"] = same["refreshments"] or o["refreshments"]
+                same["access"] = same["access"] or o["access"]
+                same["artists"] += [a for a in o["artists"] if a not in same["artists"]]
                 if o["url"] and o["url"] not in same["links"] and o["url"] != same["url"]:
                     same["links"].append(o["url"])
             else:
-                st["shows"].append({"title": o["title"], "url": o["url"], "closes": o["closes"], "links": []})
+                st["shows"].append({"title": o["title"], "url": o["url"], "closes": o["closes"], "links": [],
+                                    "image": o["image"], "artists": list(o["artists"]),
+                                    "refreshments": o["refreshments"], "access": o["access"]})
     return sorted(stops.values(), key=lambda s: (s["date"], s["start"] or "99", s["venue"].lower()))
+
+
+def add_buzz(stops):
+    """Score each stop's buzz (see buzz.py). A Wikipedia outage just leaves fame out of the score."""
+    try:
+        fame = buzz.lookup(a for st in stops for sh in st["shows"] for a in sh["artists"])
+    except Exception:
+        traceback.print_exc()
+        fame = {}
+    for st in stops:
+        buzz.score(st, fame)
+        st["image"] = next((sh["image"] for sh in st["shows"] if sh["image"]), None)
+        st["refreshments"] = next((sh["refreshments"] for sh in st["shows"] if sh["refreshments"]), None)
+        # The strictest requirement among the night's shows wins.
+        got = {sh["access"] for sh in st["shows"]}
+        st["access"] = next((a for a in ("invite", "rsvp", "open") if a in got), None)
 
 
 def get_data(force=False):

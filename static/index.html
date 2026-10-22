@@ -86,13 +86,28 @@
   }
   .card {
     background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
-    padding: 12px 14px; margin-bottom: 10px; display: grid; grid-template-columns: 74px 1fr auto; gap: 2px 12px;
-    box-shadow: inset 3px 0 0 var(--c, var(--pink));
+    padding: 12px 14px; margin-bottom: 10px; display: grid; grid-template-columns: 76px 1fr auto; gap: 2px 12px;
+    box-shadow: inset 3px 0 0 var(--c, var(--pink)); scroll-margin-top: 150px;
   }
+  .thumb { width: 76px; height: 76px; border-radius: 12px; object-fit: cover; background: var(--surface2); display: block; }
+  .thumb.none { display: grid; place-items: center; color: var(--muted); font: italic 400 28px/1 var(--fun); }
+  .top-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 2px; }
+  .meter { display: inline-flex; gap: 3px; }
+  .meter i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .meter i.on { background: var(--pink); }
+  .drinks { font-size: 13px; color: var(--orange); margin-top: 4px; }
+  .picks { margin: 14px -16px 0; }
+  .picks h3 { margin: 0 16px 8px; font: italic 400 22px/1.1 var(--fun); color: var(--pink); }
+  .picks .scroller { gap: 10px; }
+  .pk { flex: 0 0 136px; text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; }
+  .pk img, .pk .ph { width: 100%; height: 96px; object-fit: cover; display: block; background: var(--surface2); }
+  .pk div { padding: 7px 9px 9px; }
+  .pk b { display: block; font: 400 17px/1.1 var(--fun); }
+  .pk span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pk .meter { margin-top: 5px; }
   .card.done { opacity: .45; }
   .card.pick { border-color: color-mix(in srgb, var(--yellow) 60%, transparent); }
-  .when { font-weight: 600; font-size: 14px; line-height: 1.25; font-variant-numeric: tabular-nums; padding-top: 3px; color: var(--c, var(--pink)); }
-  .when small { display: block; font: 500 11px/1.3 -apple-system, system-ui, sans-serif; color: var(--muted); margin-top: 2px; }
+  .when { font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; color: var(--c, var(--pink)); }
   .when.tba { color: var(--muted); font-weight: 500; }
   .venue { font: 400 22px/1.1 var(--fun); text-decoration: none; }
   a.venue:hover { color: var(--pink); }
@@ -101,14 +116,21 @@
   .shows a { text-decoration: none; }
   .shows a:hover { text-decoration: underline; text-decoration-color: var(--pink); }
   .shows .thru { color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .addr { grid-column: 2; font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .addr { grid-column: 2 / span 2; font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
   .addr a { text-decoration: none; }
   .addr a.map { color: var(--sky); font-weight: 600; }
   .badge { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; border-radius: 999px; padding: 3px 8px; }
+  .badge { text-decoration: none; white-space: nowrap; }
   .badge.pick { background: var(--yellow); color: #231a00; }
   .badge.guess { background: var(--surface2); color: var(--lilac); }
+  .badge.fame { background: var(--pink); color: #1a0710; }
+  .badge.major { background: color-mix(in srgb, var(--sky) 22%, transparent); color: var(--sky); }
+  .badge.rsvp { background: var(--orange); color: #241000; }
+  .badge.invite { background: var(--lilac); color: #140b2a; }
+  .badge.walk { background: color-mix(in srgb, var(--lime) 16%, transparent); color: var(--lime); }
+  .badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
   .star {
-    grid-row: 1 / span 3; grid-column: 3; background: none; border: 0; cursor: pointer; font-size: 24px; line-height: 1;
+    grid-row: 1; grid-column: 3; background: none; border: 0; cursor: pointer; font-size: 24px; line-height: 1;
     color: #4a3f4e; padding: 0 0 0 4px; align-self: start;
   }
   .star[aria-pressed="true"] { color: var(--lime); }
@@ -123,6 +145,7 @@
   footer a { color: var(--lilac); }
   @media (max-width: 420px) {
     .card { grid-template-columns: 64px 1fr auto; gap: 2px 10px; padding: 12px; }
+    .thumb { width: 64px; height: 64px; }
     .venue { font-size: 20px; }
     h1 { font-size: 40px; }
   }
@@ -247,11 +270,28 @@ function render() {
   } else {
     const n = list.length, confirmed = list.filter(s => s.confirmed).length;
     html += `<p class="daysum"><b>${n} opening${n === 1 ? "" : "s"}</b> on ${fmtDay(day)}${confirmed < n ? ` · ${n - confirmed} without a posted time` : ""}</p>`;
+    html += picks(shown);
     const byHood = groupBy(shown, s => s.neighborhood);
     byHood.sort((a, b) => b[1].length - a[1].length || HOOD_ORDER.indexOf(a[0]) - HOOD_ORDER.indexOf(b[0]));
     for (const [h, stops] of byHood) html += section(h || "Elsewhere", stops, h);
   }
   main.innerHTML = html;
+}
+
+// The night's most anticipated openings, as a strip of image cards that jump to the full listing.
+function picks(stops) {
+  const top = stops.filter(s => s.buzz >= 2 && !isDone(s)).sort((a, b) => b.buzz - a.buzz || (a.start || "").localeCompare(b.start || "")).slice(0, 8);
+  if (!top.length) return "";
+  return `<div class="picks"><h3>Don't miss</h3><div class="scroller">${top.map(s => {
+    const who = s.star_artist ? s.star_artist.name : s.shows[0].title;
+    return `<button class="pk" type="button" data-jump="${esc(idOf(s))}">
+      ${s.image ? `<img src="${esc(s.image)}" alt="" loading="lazy">` : `<span class="ph"></span>`}
+      <div><b>${esc(who)}</b><span>${esc(s.venue)}${s.start ? " · " + fmtRange(s.start, s.end) : ""}</span>${meter(s.buzz)}</div></button>`;
+  }).join("")}</div></div>`;
+}
+
+function meter(n) {
+  return `<span class="meter" title="Buzz ${n} of 3">${[1, 2, 3].map(i => `<i class="${i <= n ? "on" : ""}"></i>`).join("")}</span>`;
 }
 
 function groupBy(xs, f) {
@@ -292,8 +332,11 @@ function card(s) {
   const id = idOf(s);
   const on = saved.has(id);
   const when = s.start
-    ? `<div class="when">${fmtRange(s.start, s.end)}</div>`
-    : `<div class="when tba">Time TBA<small>${s.confirmed ? "reception listed" : "opening day"}</small></div>`;
+    ? `<span class="when">${fmtRange(s.start, s.end)}</span>`
+    : `<span class="when tba">Time TBA</span>`;
+  const thumb = s.image
+    ? `<img class="thumb" src="${esc(s.image)}" alt="" loading="lazy">`
+    : `<span class="thumb none">${esc(s.venue.trim()[0] || "")}</span>`;
   const venue = s.venue_url
     ? `<a class="venue" href="${esc(s.venue_url)}" target="_blank" rel="noopener">${esc(s.venue)}</a>`
     : `<span class="venue">${esc(s.venue)}</span>`;
@@ -301,20 +344,38 @@ function card(s) {
     const t = sh.url ? `<a href="${esc(sh.url)}" target="_blank" rel="noopener">${esc(sh.title)}</a>` : esc(sh.title);
     return `<li>${t}${sh.closes ? ` <span class="thru">· through ${fmtShort(sh.closes)}</span>` : ""}</li>`;
   }).join("");
+  const star = s.star_artist;
+  const fame = star && (s.reasons || []).find(r => r === "Big name" || r === "Known artist");
   const badges = [
     s.pick ? `<span class="badge pick">Artforum must-see</span>` : "",
+    fame ? `<a class="badge fame" href="${esc(star.url)}" target="_blank" rel="noopener" title="${esc(star.name)}: ${esc(star.description)}, ${Number(star.views).toLocaleString()} Wikipedia views last month">${esc(fame)}</a>` : "",
+    (s.reasons || []).includes("Major gallery") ? `<span class="badge major">Major gallery</span>` : "",
+    accessBadge(s),
     !s.confirmed ? `<span class="badge guess" title="The gallery hasn't posted reception details yet. Most hold one 6–8pm on the first day.">Reception not confirmed</span>` : "",
   ].join("");
-  return `<div class="card${isDone(s) ? " done" : ""}${s.pick ? " pick" : ""}" style="--c:${colorOf(s.neighborhood)}">
-    ${when}
-    <div>${venue}<ul class="shows">${shows}</ul></div>
+  return `<div class="card${isDone(s) ? " done" : ""}${s.pick ? " pick" : ""}" id="${esc("s-" + id)}" style="--c:${colorOf(s.neighborhood)}">
+    ${thumb}
+    <div>
+      <div class="top-line">${when}${s.buzz ? meter(s.buzz) : ""}</div>
+      ${venue}<ul class="shows">${shows}</ul>
+      ${s.refreshments ? `<div class="drinks">🍷 ${esc(s.refreshments)}</div>` : ""}
+      <div class="badges">${badges}</div>
+    </div>
     <button class="star" type="button" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? "Remove from" : "Save to"} my night">${on ? "★" : "☆"}</button>
     <div class="addr">
       <a class="map" href="${esc(mapUrl(s))}" target="_blank" rel="noopener">${esc(s.address || s.neighborhood || "Map")} ↗</a>
       ${s.start ? `<button class="cal" type="button" data-id="${esc(id)}">+ Calendar</button>` : ""}
-      ${badges}
     </div>
   </div>`;
+}
+
+function accessBadge(s) {
+  // RSVP details live on the gallery's own page, so prefer it over a listing site's.
+  const urls = s.shows.flatMap(sh => [sh.url, ...(sh.links || [])]).filter(Boolean);
+  const link = urls.find(u => !u.includes("artforum.com") && !u.includes("artcards.cc")) || urls[0];
+  if (s.access === "invite") return `<span class="badge invite" title="The gallery says this opening is by invitation.">Invite only</span>`;
+  if (s.access === "rsvp") return `<a class="badge rsvp" href="${esc(link || s.venue_url || "#")}" target="_blank" rel="noopener" title="The gallery asks guests to RSVP; details on the show page.">RSVP ↗</a>`;
+  return `<span class="badge walk" title="${s.access === "open" ? "The gallery says all are welcome." : "No RSVP mentioned. Gallery openings are free and open to everyone unless they say otherwise."}">Walk in</span>`;
 }
 
 function renderDays() {
@@ -355,7 +416,9 @@ function ics(s) {
     `DTEND;TZID=America/New_York:${stamp(s.date)}T${stamp(end)}00`,
     "SUMMARY:" + txt("Opening: " + s.venue),
     "LOCATION:" + txt([s.venue, s.address, "New York, NY"].filter(Boolean).join(", ")),
-    "DESCRIPTION:" + txt(s.shows.map(x => x.title + (x.url ? " " + x.url : "")).join("\n")),
+    "DESCRIPTION:" + txt([...s.shows.map(x => x.title + (x.url ? " " + x.url : "")),
+      s.refreshments ? "Drinks: " + s.refreshments : "",
+      s.access === "rsvp" ? "RSVP required: see the show page." : s.access === "invite" ? "By invitation." : ""].filter(Boolean).join("\n")),
     "END:VEVENT", "END:VCALENDAR"];
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([lines.join("\r\n")], {type: "text/calendar"}));
@@ -367,10 +430,12 @@ function ics(s) {
 function footer() {
   const src = (data?.sources || []).map(s =>
     `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a> (${s.count}${s.error ? ", " + (s.stale ? "showing earlier listings" : "failed") : ""})`).join(" · ");
-  $("#foot").innerHTML = `Listings from ${src}. Gallery openings are free and open to everyone; wine isn't guaranteed. Times can change, so check the gallery's site before you head out.`;
+  $("#foot").innerHTML = `Listings from ${src}. Gallery openings are free and walk-in unless marked RSVP or invite only; wine isn't guaranteed. Buzz dots add up Artforum's must-see picks, how well known the artist is (Wikipedia page views) and whether it's a major gallery. Times can change, so check the gallery's site before you head out.`;
 }
 
 document.addEventListener("click", e => {
+  const pk = e.target.closest(".pk");
+  if (pk) { document.getElementById("s-" + pk.dataset.jump)?.scrollIntoView({behavior: "smooth", block: "start"}); return; }
   const d = e.target.closest(".day");
   if (d) { day = d.dataset.day; render(); window.scrollTo({top: 0}); return; }
   const c = e.target.closest(".chip");

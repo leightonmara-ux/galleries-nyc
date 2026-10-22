@@ -19,6 +19,12 @@ Each opening dict (build it with opening() so every field is present):
                         only the show's first day (galleries usually hold one that evening)
     lat, lng      float map position, None when unknown
     pick          bool  flagged by the source's editors (Artguide "Must See")
+    image         str   a small image from the show (thumbnail size), None when there isn't one
+    refreshments  str   what the gallery says it will serve ("Wine courtesy of …"), None if unsaid
+    access        str   "rsvp" or "invite" when the gallery says so, "open" when it says all are
+                        welcome, None when it says nothing (openings are walk-in by default)
+    artists       list  artist names, when the source lists them separately; otherwise empty, and
+                        artists_from_title() makes a guess
 """
 import datetime as dt
 import gzip
@@ -172,9 +178,83 @@ def _hm(h, mi, ap, default):
 
 
 def opening(title, venue, date, start=None, end=None, neighborhood="", address="", url=None,
-            venue_url=None, closes=None, confirmed=True, lat=None, lng=None, pick=False):
+            venue_url=None, closes=None, confirmed=True, lat=None, lng=None, pick=False, image=None,
+            artists=None, refreshments=None, access=None):
     return {"title": clean(title), "venue": clean(venue), "date": str(date),
             "start": start or None, "end": end or None, "neighborhood": neighborhood or "",
             "address": clean(address), "url": url or None, "venue_url": venue_url or None,
             "closes": str(closes) if closes else None, "confirmed": bool(confirmed),
-            "lat": lat, "lng": lng, "pick": bool(pick)}
+            "lat": lat, "lng": lng, "pick": bool(pick), "image": image or None,
+            "refreshments": refreshments or None, "access": access or None,
+            "artists": artists or artists_from_title(title)}
+
+
+NOT_NAMES = re.compile(r"\b(group|exhibition|show|collection|works|selected|new|recent|presents|"
+                       r"paintings|drawings|sculpture|photographs|prints|years|art|and others)\b", re.I)
+
+
+def artists_from_title(title):
+    """'Kehinde Wiley: What the Light Becomes' -> ['Kehinde Wiley']; 'Andrew Weir & Jack Pierson' ->
+    both; 'Teruko Yokoi "Seasons"' -> ['Teruko Yokoi']. Group shows and titles that don't look like
+    names give []."""
+    t = clean(title)
+    head = re.split(r':|"|\u201c| \| | \u2013 | - ', t, maxsplit=1)[0].strip()
+    return split_artists(head)
+
+
+def split_artists(s):
+    """'Andrew Weir & Jack Pierson' / 'A, B, and C' / 'Ward Shelley with Douglas Paulson' -> names.
+    A duo's name ('Elmgreen & Dragset') is also kept whole, so it can be found as one entry."""
+    s = clean(s)
+    if not s or NOT_NAMES.search(s):
+        return []
+    parts = [p.strip() for p in re.split(r",\s*(?:and\s+)?|\s+(?:and|with|&)\s+", s) if p.strip()]
+    names = [p for p in parts if 1 <= len(p.split()) <= 4 and not re.search(r"\d", p)]
+    if len(parts) == 2 and "&" in s:
+        names.insert(0, s)
+    return names[:4]
+
+
+DRINKS = re.compile(r"\b(wine|champagne|prosecco|cocktails?|drinks|beverages|refreshments|beer|sake|mezcal|"
+                    r"tequila|vodka|gin|spirits|bar\b|hors d|canap|bites|snacks|food|dumplings|oysters|"
+                    r"sponsored by|courtesy of|poured by)", re.I)
+NOT_DRINKS = re.compile(r"\b(painting|canvas|depict|still life|vineyard|bottle of|series|works? on|"
+                        r"sculpture|photograph)", re.I)
+
+
+def refreshments(text):
+    """The sentence where a gallery says what it'll serve, trimmed: 'Drinks courtesy of Aperol.'
+    Only sentences that also mention the opening, reception or event count, so a painting of a wine
+    glass doesn't qualify."""
+    for sentence in re.split(r"(?<=[.!?])\s+", clean(text)):
+        if len(sentence) > 400 or not DRINKS.search(sentence) or NOT_DRINKS.search(sentence):
+            continue
+        if not re.search(r"reception|opening|event|evening|served|provided|join|celebrat|courtesy|sponsor|poured",
+                         sentence, re.I):
+            continue
+        m = DRINKS.search(sentence)
+        # Keep the part around the drinks mention, at most ~140 characters.
+        start = max(0, sentence.rfind(",", 0, m.start()) + 1, m.start() - 80)
+        snippet = sentence[start:start + 140].strip(" ,;")
+        if start + 140 < len(sentence):
+            snippet = snippet.rsplit(" ", 1)[0] + "…"
+        return snippet[0].upper() + snippet[1:]
+    return None
+
+
+_INVITE = re.compile(r"by invitation|invitation only|invite[- ]only|private (?:view|reception|preview)", re.I)
+_RSVP = re.compile(r"\bRSVP\b|registration (?:is )?required|register (?:here|in advance|to attend)|"
+                   r"reserve (?:a|your) (?:spot|place|ticket)", re.I)
+_OPEN = re.compile(r"(?:free and )?open to the public|all are welcome|everyone is welcome|no rsvp", re.I)
+
+
+def access(text):
+    """Whether the opening needs an RSVP or invitation, going by what the gallery wrote."""
+    text = clean(text)
+    if _OPEN.search(text) and not _INVITE.search(text):
+        return "open"
+    if _INVITE.search(text):
+        return "invite"
+    if _RSVP.search(text):
+        return "rsvp"
+    return None
