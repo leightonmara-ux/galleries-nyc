@@ -3,7 +3,7 @@
   "short_name": "Openings",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0d0b0e",
+  "background_color": "#2346d8",
   "theme_color": "#0d0b0e",
   "icons": [
     {
