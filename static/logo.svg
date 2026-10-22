@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="112" fill="#0d0b0e"/>
-  <circle cx="232" cy="280" r="128" fill="#ff5fa8"/>
-  <circle cx="356" cy="164" r="52" fill="#c8f53c"/>
+  <!-- wine glass: mauve glass, sage wine (hues 318° and 138°, same saturation and lightness) -->
+  <path d="M176 238 H336 C330 288 298 318 256 318 C214 318 182 288 176 238 Z" fill="#87c99b"/>
+  <path d="M168 104 H344 C350 220 316 318 256 318 C196 318 162 220 168 104 Z"
+        fill="none" stroke="#c987b5" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M256 318 V404 M196 410 H316" stroke="#c987b5" stroke-width="22" stroke-linecap="round"/>
 </svg>
