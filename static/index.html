@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0b0e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Openings">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" sizes="32x32">
+<title>Openings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+  /* Always dark: candy colors on black. */
+  :root {
+    --bg: #0d0b0e; --surface: #18141a; --surface2: #221c25; --ink: #fbf4f8; --muted: #a497a6; --line: #2e2632;
+    --pink: #ff5fa8; --lime: #c8f53c; --orange: #ff9a3d; --lilac: #b49cff; --sky: #5cd3ff; --yellow: #ffd84a;
+    --accent: var(--pink);
+    --r: 18px;
+    --fun: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; background: var(--bg); }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+  }
+  button, input { font: inherit; color: inherit; }
+  a { color: inherit; }
+
+  header { padding: 20px 16px 8px; max-width: 760px; margin: 0 auto; }
+  .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  h1 { margin: 0; font: 400 44px/0.95 var(--fun); letter-spacing: -0.01em; color: var(--ink); }
+  h1 em { font-style: italic; color: var(--pink); }
+  .tag { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+  .tag b { color: var(--orange); font-weight: 600; }
+  .meta { color: var(--muted); font-size: 12px; text-align: right; flex: none; white-space: nowrap; padding-top: 6px; }
+  .meta button { background: none; border: 0; padding: 0; color: var(--lime); cursor: pointer; font-size: 12px; font-weight: 600; }
+
+  .sticky {
+    position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    padding-top: env(safe-area-inset-top); margin-top: calc(-1 * env(safe-area-inset-top));
+    border-bottom: 1px solid var(--line);
+  }
+  .sticky-inner { max-width: 760px; margin: 0 auto; padding: 8px 0 10px; }
+  .scroller { display: flex; gap: 7px; overflow-x: auto; padding: 0 16px; scrollbar-width: none; }
+  .scroller::-webkit-scrollbar { display: none; }
+  .day {
+    flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); border-radius: 14px;
+    padding: 5px 10px; text-align: center; cursor: pointer; min-width: 58px;
+  }
+  .day small { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .day b { font-size: 18px; font-weight: 650; }
+  .day .n { display: block; font-size: 11px; color: var(--pink); font-weight: 700; min-height: 14px; }
+  .day.none { opacity: .4; }
+  .day[aria-pressed="true"] { background: var(--pink); color: #1a0710; border-color: var(--pink); }
+  .day[aria-pressed="true"] small, .day[aria-pressed="true"] .n { color: inherit; opacity: .8; }
+  .day.saved { border-color: color-mix(in srgb, var(--lime) 50%, transparent); }
+  .day.saved b { color: var(--lime); font-size: 16px; line-height: 22px; }
+  .day.saved[aria-pressed="true"] { background: var(--lime); border-color: var(--lime); color: #142000; }
+  .day.saved[aria-pressed="true"] b { color: inherit; }
+
+  .chips { padding-top: 10px; }
+  .chip {
+    flex: 0 0 auto; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: transparent; border-radius: 999px;
+    padding: 4px 12px; font-size: 13px; cursor: pointer; color: var(--c); white-space: nowrap; font-weight: 500;
+  }
+  .chip[aria-pressed="true"] { color: #120d14; background: var(--c); border-color: var(--c); }
+  .chip span { opacity: .7; margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+  main { max-width: 760px; margin: 0 auto; padding: 4px 16px 12px; }
+  .hood { margin: 22px 0 10px; display: flex; align-items: center; gap: 10px; }
+  .hood h2 { margin: 0; font: italic 400 28px/1.1 var(--fun); color: var(--c, var(--ink)); }
+  .hood .crawl {
+    margin-left: auto; font-size: 12px; color: #120d14; background: var(--c, var(--lime)); text-decoration: none;
+    font-weight: 600; white-space: nowrap; border-radius: 999px; padding: 5px 11px;
+  }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 12px 14px; margin-bottom: 10px; display: grid; grid-template-columns: 74px 1fr auto; gap: 2px 12px;
+    box-shadow: inset 3px 0 0 var(--c, var(--pink));
+  }
+  .card.done { opacity: .45; }
+  .card.pick { border-color: color-mix(in srgb, var(--yellow) 60%, transparent); }
+  .when { font-weight: 600; font-size: 14px; line-height: 1.25; font-variant-numeric: tabular-nums; padding-top: 3px; color: var(--c, var(--pink)); }
+  .when small { display: block; font: 500 11px/1.3 -apple-system, system-ui, sans-serif; color: var(--muted); margin-top: 2px; }
+  .when.tba { color: var(--muted); font-weight: 500; }
+  .venue { font: 400 22px/1.1 var(--fun); text-decoration: none; }
+  a.venue:hover { color: var(--pink); }
+  .shows { margin: 4px 0 0; padding: 0; list-style: none; }
+  .shows li { font-size: 14px; line-height: 1.35; margin: 3px 0; color: #e6dbe5; }
+  .shows a { text-decoration: none; }
+  .shows a:hover { text-decoration: underline; text-decoration-color: var(--pink); }
+  .shows .thru { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .addr { grid-column: 2; font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .addr a { text-decoration: none; }
+  .addr a.map { color: var(--sky); font-weight: 600; }
+  .badge { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; border-radius: 999px; padding: 3px 8px; }
+  .badge.pick { background: var(--yellow); color: #231a00; }
+  .badge.guess { background: var(--surface2); color: var(--lilac); }
+  .star {
+    grid-row: 1 / span 3; grid-column: 3; background: none; border: 0; cursor: pointer; font-size: 24px; line-height: 1;
+    color: #4a3f4e; padding: 0 0 0 4px; align-self: start;
+  }
+  .star[aria-pressed="true"] { color: var(--lime); }
+  .cal { background: none; border: 0; padding: 0; color: var(--orange); cursor: pointer; font-size: 12px; font-weight: 600; }
+  .cal:hover { color: var(--ink); }
+  .daysum { color: var(--muted); font-size: 14px; margin: 16px 0 0; }
+  .daysum b { color: var(--lime); font-weight: 600; }
+  .empty, .err { color: var(--muted); text-align: center; padding: 48px 12px; font-size: 15px; }
+  .skel { height: 88px; border-radius: var(--r); background: linear-gradient(90deg, var(--surface), var(--surface2), var(--surface)); background-size: 200% 100%; animation: sh 1.2s infinite linear; margin-bottom: 10px; }
+  @keyframes sh { to { background-position: -200% 0; } }
+  footer { max-width: 760px; margin: 0 auto; padding: 8px 16px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+  footer a { color: var(--lilac); }
+  @media (max-width: 420px) {
+    .card { grid-template-columns: 64px 1fr auto; gap: 2px 10px; padding: 12px; }
+    .venue { font-size: 20px; }
+    h1 { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Openings <em>NYC</em></h1>
+    <div class="meta"><span id="updated"></span> · <button id="refresh" type="button">Refresh</button></div>
+  </div>
+  <p class="tag">Free gallery openings, night by night. <b>Wine usually included.</b></p>
+</header>
+
+<div class="sticky">
+  <div class="sticky-inner">
+    <div class="scroller" id="days" role="toolbar" aria-label="Day"></div>
+    <div class="scroller chips" id="hoods" role="toolbar" aria-label="Neighborhood"></div>
+  </div>
+</div>
+
+<main id="main"><div class="skel"></div><div class="skel"></div><div class="skel"></div></main>
+<footer id="foot"></footer>
+
+<script>
+const $ = s => document.querySelector(s);
+const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const HOOD_ORDER = ["Chelsea", "Tribeca / SoHo", "Downtown", "Midtown", "Uptown", "Upper West Side", "Brooklyn", "Queens", "Bronx", ""];
+const SAVED = "saved";
+const HOOD_COLOR = {"Chelsea": "var(--pink)", "Tribeca / SoHo": "var(--lime)", "Downtown": "var(--orange)",
+  "Midtown": "var(--sky)", "Uptown": "var(--lilac)", "Upper West Side": "var(--lilac)", "Brooklyn": "var(--yellow)",
+  "Queens": "var(--sky)", "Bronx": "var(--orange)", "": "var(--muted)"};
+const colorOf = h => HOOD_COLOR[h] || "var(--pink)";
+
+let data = null, day = null, hoods = new Set();
+let saved = new Set(load("openings.saved", []));
+
+function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c])); }
+
+// "Now" in New York, as a local-time ISO string like the data uses.
+function nyNow() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", {timeZone: "America/New_York", year: "numeric",
+    month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23"})
+    .formatToParts(new Date()).map(x => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+const todayStr = () => nyNow().slice(0, 10);
+function parseDay(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function fmtDay(s) { const d = parseDay(s); return `${DOW[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`; }
+function fmtShort(s) { const d = parseDay(s); return `${MON[d.getMonth()]} ${d.getDate()}`; }
+function h12(t) { let [h, m] = t.split(":").map(Number); h = h % 12 || 12; return m ? `${h}:${String(m).padStart(2, "0")}` : `${h}`; }
+function ampm(t) { return Number(t.split(":")[0]) >= 12 ? "pm" : "am"; }
+function fmtRange(a, b) {
+  if (!a) return "";
+  if (!b) return h12(a) + ampm(a);
+  return ampm(a) === ampm(b) ? `${h12(a)}–${h12(b)}${ampm(b)}` : `${h12(a)}${ampm(a)}–${h12(b)}${ampm(b)}`;
+}
+const idOf = s => s.date + "|" + s.venue;
+
+// A stop is over once its reception has ended (or, with no end time posted, two hours after it starts;
+// with no time at all, after 9pm).
+function isDone(s) {
+  const now = nyNow();
+  if (s.date !== now.slice(0, 10)) return s.date < now.slice(0, 10);
+  let end = s.end;
+  if (!end && s.start) { const [h, m] = s.start.split(":").map(Number); end = `${String(Math.min(h + 2, 23)).padStart(2, "0")}:${String(m).padStart(2, "0")}`; }
+  return now.slice(11) > (end || "21:00");
+}
+
+async function fetchData(refresh) {
+  try {
+    const r = await fetch("api/openings" + (refresh ? "?refresh=1" : ""), {cache: "no-store"});
+    if (r.ok && (r.headers.get("content-type") || "").includes("json")) return await r.json();
+  } catch {}
+  const r = await fetch("data/openings.json", {cache: "no-store"});
+  if (!r.ok) throw new Error("couldn't load openings");
+  return await r.json();
+}
+
+async function init(refresh) {
+  try {
+    data = await fetchData(refresh);
+  } catch (e) {
+    $("#main").innerHTML = `<div class="err">Couldn't load openings. ${esc(e.message)}</div>`;
+    return;
+  }
+  const t = todayStr();
+  data.stops = data.stops.filter(s => s.date >= t);
+  const live = new Set(data.stops.map(idOf));
+  saved = new Set([...saved].filter(id => live.has(id)));
+  store("openings.saved", [...saved]);
+  if (!day || (day !== SAVED && day < t)) {
+    // Tonight if anything is still on, otherwise the next night with openings.
+    const next = data.stops.find(s => !isDone(s));
+    day = next ? next.date : t;
+  }
+  const u = data.updated ? new Date(data.updated) : null;
+  $("#updated").textContent = u ? "Updated " + u.toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}) : "";
+  render();
+}
+
+function render() {
+  renderDays();
+  const list = day === SAVED ? data.stops.filter(s => saved.has(idOf(s))) : data.stops.filter(s => s.date === day);
+  renderHoods(list);
+  const shown = hoods.size ? list.filter(s => hoods.has(s.neighborhood)) : list;
+  const main = $("#main");
+  if (!list.length) {
+    main.innerHTML = day === SAVED
+      ? `<div class="empty">Tap ☆ on an opening to save it here and plan your night.</div>`
+      : `<div class="empty">No openings listed for ${fmtDay(day)}.<br>Thursdays are the big night, especially in Chelsea.</div>`;
+    return;
+  }
+  let html = "";
+  if (day === SAVED) {
+    const byDay = groupBy(shown, s => s.date);
+    for (const [d, stops] of byDay) html += section(fmtDay(d), stops);
+  } else {
+    const n = list.length, confirmed = list.filter(s => s.confirmed).length;
+    html += `<p class="daysum"><b>${n} opening${n === 1 ? "" : "s"}</b> on ${fmtDay(day)}${confirmed < n ? ` · ${n - confirmed} without a posted time` : ""}</p>`;
+    const byHood = groupBy(shown, s => s.neighborhood);
+    byHood.sort((a, b) => b[1].length - a[1].length || HOOD_ORDER.indexOf(a[0]) - HOOD_ORDER.indexOf(b[0]));
+    for (const [h, stops] of byHood) html += section(h || "Elsewhere", stops, h);
+  }
+  main.innerHTML = html;
+}
+
+function groupBy(xs, f) {
+  const m = new Map();
+  for (const x of xs) { const k = f(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
+  return [...m];
+}
+
+function section(title, stops, hood) {
+  const crawl = crawlUrl(stops.filter(s => !isDone(s)));
+  const style = hood === undefined ? "" : ` style="--c:${colorOf(hood)}"`;
+  return `<div class="hood"${style}><h2>${esc(title)}</h2>${crawl ? `<a class="crawl" href="${esc(crawl)}" target="_blank" rel="noopener">Walk them all ↗</a>` : ""}</div>`
+    + stops.map(card).join("");
+}
+
+function place(s) {
+  if (s.lat && s.lng) return `${s.lat},${s.lng}`;
+  return [s.venue, s.address, "New York, NY"].filter(Boolean).join(", ");
+}
+function mapUrl(s) {
+  const q = s.address ? `${s.venue}, ${s.address}, New York, NY` : `${s.venue}, New York, NY`;
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+}
+// Walking directions through every stop in the section, in time order (Google allows 9 waypoints).
+function crawlUrl(stops) {
+  if (stops.length < 2) return "";
+  const pts = stops.slice(0, 11).map(place);
+  const u = new URL("https://www.google.com/maps/dir/");
+  u.searchParams.set("api", "1");
+  u.searchParams.set("travelmode", "walking");
+  u.searchParams.set("origin", pts[0]);
+  u.searchParams.set("destination", pts[pts.length - 1]);
+  if (pts.length > 2) u.searchParams.set("waypoints", pts.slice(1, -1).join("|"));
+  return u.toString();
+}
+
+function card(s) {
+  const id = idOf(s);
+  const on = saved.has(id);
+  const when = s.start
+    ? `<div class="when">${fmtRange(s.start, s.end)}</div>`
+    : `<div class="when tba">Time TBA<small>${s.confirmed ? "reception listed" : "opening day"}</small></div>`;
+  const venue = s.venue_url
+    ? `<a class="venue" href="${esc(s.venue_url)}" target="_blank" rel="noopener">${esc(s.venue)}</a>`
+    : `<span class="venue">${esc(s.venue)}</span>`;
+  const shows = s.shows.map(sh => {
+    const t = sh.url ? `<a href="${esc(sh.url)}" target="_blank" rel="noopener">${esc(sh.title)}</a>` : esc(sh.title);
+    return `<li>${t}${sh.closes ? ` <span class="thru">· through ${fmtShort(sh.closes)}</span>` : ""}</li>`;
+  }).join("");
+  const badges = [
+    s.pick ? `<span class="badge pick">Artforum must-see</span>` : "",
+    !s.confirmed ? `<span class="badge guess" title="The gallery hasn't posted reception details yet. Most hold one 6–8pm on the first day.">Reception not confirmed</span>` : "",
+  ].join("");
+  return `<div class="card${isDone(s) ? " done" : ""}${s.pick ? " pick" : ""}" style="--c:${colorOf(s.neighborhood)}">
+    ${when}
+    <div>${venue}<ul class="shows">${shows}</ul></div>
+    <button class="star" type="button" data-id="${esc(id)}" aria-pressed="${on}" aria-label="${on ? "Remove from" : "Save to"} my night">${on ? "★" : "☆"}</button>
+    <div class="addr">
+      <a class="map" href="${esc(mapUrl(s))}" target="_blank" rel="noopener">${esc(s.address || s.neighborhood || "Map")} ↗</a>
+      ${s.start ? `<button class="cal" type="button" data-id="${esc(id)}">+ Calendar</button>` : ""}
+      ${badges}
+    </div>
+  </div>`;
+}
+
+function renderDays() {
+  const t = todayStr(), counts = {};
+  for (const s of data.stops) counts[s.date] = (counts[s.date] || 0) + 1;
+  const last = data.stops.length ? data.stops[data.stops.length - 1].date : t;
+  let html = `<button class="day saved" type="button" data-day="${SAVED}" aria-pressed="${day === SAVED}"><small>My night</small><b>★</b><span class="n">${saved.size || ""}</span></button>`;
+  // +25h from midnight always lands on the next day, DST or not.
+  for (let d = t; d <= last; d = ymd(new Date(parseDay(d).getTime() + 25 * 36e5))) {
+    const dt = parseDay(d), n = counts[d] || 0;
+    const label = d === t ? "Today" : DOW[dt.getDay()];
+    html += `<button class="day${n ? "" : " none"}" type="button" data-day="${d}" aria-pressed="${day === d}"><small>${label}</small><b>${dt.getDate()}</b><span class="n">${n || ""}</span></button>`;
+  }
+  const el = $("#days");
+  el.innerHTML = html;
+  const cur = el.querySelector('[aria-pressed="true"]');
+  if (cur && cur.dataset.day !== SAVED) cur.scrollIntoView({inline: "center", block: "nearest"});
+}
+
+function renderHoods(list) {
+  const counts = {};
+  for (const s of list) counts[s.neighborhood] = (counts[s.neighborhood] || 0) + 1;
+  const names = HOOD_ORDER.filter(h => counts[h]);
+  for (const h of [...hoods]) if (!counts[h]) hoods.delete(h);
+  $("#hoods").hidden = names.length < 2;
+  $("#hoods").innerHTML = names.map(h =>
+    `<button class="chip" type="button" style="--c:${colorOf(h)}" data-hood="${esc(h)}" aria-pressed="${hoods.has(h)}">${esc(h || "Elsewhere")}<span>${counts[h]}</span></button>`).join("");
+}
+
+function ics(s) {
+  const stamp = d => d.replace(/[-:]/g, "");
+  const end = s.end || (() => { const [h, m] = s.start.split(":").map(Number); return `${String(Math.min(h + 2, 23)).padStart(2, "0")}:${String(m).padStart(2, "0")}`; })();
+  const txt = v => String(v || "").replace(/([,;\\])/g, "\\$1").replace(/\n/g, "\\n");
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Openings NYC//EN", "BEGIN:VEVENT",
+    "UID:" + stamp(s.date) + "-" + s.venue.replace(/\W+/g, "") + "@openings-nyc",
+    "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, ""),
+    `DTSTART;TZID=America/New_York:${stamp(s.date)}T${stamp(s.start)}00`,
+    `DTEND;TZID=America/New_York:${stamp(s.date)}T${stamp(end)}00`,
+    "SUMMARY:" + txt("Opening: " + s.venue),
+    "LOCATION:" + txt([s.venue, s.address, "New York, NY"].filter(Boolean).join(", ")),
+    "DESCRIPTION:" + txt(s.shows.map(x => x.title + (x.url ? " " + x.url : "")).join("\n")),
+    "END:VEVENT", "END:VCALENDAR"];
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([lines.join("\r\n")], {type: "text/calendar"}));
+  a.download = (s.venue.replace(/[^\w]+/g, "-") + "-" + s.date + ".ics").toLowerCase();
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function footer() {
+  const src = (data?.sources || []).map(s =>
+    `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a> (${s.count}${s.error ? ", " + (s.stale ? "showing earlier listings" : "failed") : ""})`).join(" · ");
+  $("#foot").innerHTML = `Listings from ${src}. Gallery openings are free and open to everyone; wine isn't guaranteed. Times can change, so check the gallery's site before you head out.`;
+}
+
+document.addEventListener("click", e => {
+  const d = e.target.closest(".day");
+  if (d) { day = d.dataset.day; render(); window.scrollTo({top: 0}); return; }
+  const c = e.target.closest(".chip");
+  if (c) { const h = c.dataset.hood; hoods.has(h) ? hoods.delete(h) : hoods.add(h); render(); return; }
+  const st = e.target.closest(".star");
+  if (st) {
+    const id = st.dataset.id;
+    saved.has(id) ? saved.delete(id) : saved.add(id);
+    store("openings.saved", [...saved]);
+    render();
+    return;
+  }
+  const cal = e.target.closest(".cal");
+  if (cal) { const s = data.stops.find(x => idOf(x) === cal.dataset.id); if (s) ics(s); }
+});
+$("#refresh").addEventListener("click", async () => {
+  $("#refresh").textContent = "Refreshing…";
+  await init(true);
+  $("#refresh").textContent = "Refresh";
+  footer();
+});
+
+init().then(footer);
+</script>
+</body>
+</html>
