@@ -19,22 +19,22 @@
       <path d="M352 138 L380 106 L402 126 L424 98 L438 138" stroke-width="3"/>
     </g>
     <!-- one glass of red on a server's tray -->
-    <path d="M207 216 H285 C283 240 271 256 246 260 C221 256 209 240 207 216 Z" fill="#7a1530"/>
-    <g stroke="url(#silver)" stroke-width="9">
+    <path d="M207 216 H285 C283 240 271 256 246 260 C221 256 209 240 207 216 Z" fill="#b8324a"/>
+    <g stroke="url(#silver)" stroke-width="6">
       <g stroke-width="4">
         <path d="M206 150 H286 C292 214 282 256 246 262 C210 256 200 214 206 150 Z"/>
         <path d="M246 262 V328"/>
         <ellipse cx="246" cy="331" rx="30" ry="6"/>
       </g>
       <ellipse cx="236" cy="340" rx="176" ry="38"/>
-      <ellipse cx="236" cy="340" rx="150" ry="28" stroke-width="5"/>
+      <ellipse cx="236" cy="340" rx="150" ry="28" stroke-width="3.5"/>
       <path d="M60 340 C60 364 140 386 236 386 C332 386 412 364 412 340"/>
     </g>
     <!-- the server's hand flat under the tray, white cuff, dark sleeve -->
-    <g stroke="url(#silver)" stroke-width="8">
+    <g stroke="url(#silver)" stroke-width="6">
       <path d="M262 388 C262 382 272 381 292 382 C330 382 360 378 384 372 L424 398"/>
       <path d="M262 388 C264 394 274 397 292 399 C330 404 370 412 406 428"/>
-      <path d="M424 398 L452 418 L434 450 L406 428" stroke-width="7"/>
+      <path d="M424 398 L452 418 L434 450 L406 428" stroke-width="5"/>
       <path d="M452 418 L520 462 M434 450 L486 520"/>
     </g>
   </g>
