@@ -1,8 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="90" y1="76" x2="420" y2="386">
+      <stop offset="0" stop-color="#f4f5f7"/>
+      <stop offset="0.5" stop-color="#b9bec6"/>
+      <stop offset="1" stop-color="#8d939c"/>
+    </linearGradient>
+  </defs>
   <rect width="512" height="512" rx="112" fill="#0d0b0e"/>
-  <!-- wine glass: mauve glass, sage wine (hues 318° and 138°, same saturation and lightness) -->
-  <path d="M176 238 H336 C330 288 298 318 256 318 C214 318 182 288 176 238 Z" fill="#87c99b"/>
-  <path d="M168 104 H344 C350 220 316 318 256 318 C196 318 162 220 168 104 Z"
-        fill="none" stroke="#c987b5" stroke-width="22" stroke-linejoin="round"/>
-  <path d="M256 318 V404 M196 410 H316" stroke="#c987b5" stroke-width="22" stroke-linecap="round"/>
+  <!-- a wine glass standing on a server's tray, in silver line -->
+  <g transform="translate(0 14)" fill="none" stroke="url(#silver)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M206 92 H306 C310 170 290 222 256 224 C222 222 202 170 206 92 Z"/>
+    <path d="M216 160 H296"/>
+    <path d="M256 224 V330"/>
+    <ellipse cx="256" cy="334" rx="40" ry="8"/>
+    <ellipse cx="256" cy="350" rx="168" ry="34"/>
+    <path d="M88 350 C88 372 164 392 256 392 C348 392 424 372 424 350"/>
+  </g>
 </svg>
