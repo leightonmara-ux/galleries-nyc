@@ -1,19 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="90" y1="76" x2="420" y2="386">
+    <linearGradient id="silver" gradientUnits="userSpaceOnUse" x1="60" y1="120" x2="440" y2="440">
       <stop offset="0" stop-color="#f4f5f7"/>
       <stop offset="0.5" stop-color="#b9bec6"/>
       <stop offset="1" stop-color="#8d939c"/>
     </linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
   </defs>
   <rect width="512" height="512" rx="112" fill="#0d0b0e"/>
-  <!-- a wine glass standing on a server's tray, in silver line -->
-  <g transform="translate(0 14)" fill="none" stroke="url(#silver)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M206 92 H306 C310 170 290 222 256 224 C222 222 202 170 206 92 Z"/>
-    <path d="M216 160 H296"/>
-    <path d="M256 224 V330"/>
-    <ellipse cx="256" cy="334" rx="40" ry="8"/>
-    <ellipse cx="256" cy="350" rx="168" ry="34"/>
-    <path d="M88 350 C88 372 164 392 256 392 C348 392 424 372 424 350"/>
+  <g clip-path="url(#tile)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- the gallery wall behind: framed works, faint -->
+    <g stroke="#8d939c" stroke-width="5" opacity=".45">
+      <rect x="62" y="70" width="128" height="96"/>
+      <rect x="76" y="84" width="100" height="68" stroke-width="3"/>
+      <rect x="232" y="58" width="64" height="84"/>
+      <rect x="336" y="74" width="116" height="78"/>
+      <circle cx="264" cy="96" r="14" stroke-width="3"/>
+      <path d="M352 138 L380 106 L402 126 L424 98 L438 138" stroke-width="3"/>
+    </g>
+    <!-- one glass of red on a server's tray -->
+    <path d="M208 216 H284 C282 240 270 254 246 260 C222 254 210 240 208 216 Z" fill="#7a1530"/>
+    <g stroke="url(#silver)" stroke-width="9">
+      <path d="M206 150 H286 C292 214 282 256 246 262 C210 256 200 214 206 150 Z"/>
+      <path d="M246 262 V328"/>
+      <ellipse cx="246" cy="331" rx="30" ry="6"/>
+      <ellipse cx="236" cy="340" rx="176" ry="38"/>
+      <ellipse cx="236" cy="340" rx="150" ry="28" stroke-width="5"/>
+      <path d="M60 340 C60 364 140 386 236 386 C332 386 412 364 412 340"/>
+    </g>
+    <!-- the server's hand flat under the tray, white cuff, dark sleeve -->
+    <g stroke="url(#silver)" stroke-width="8">
+      <path d="M262 388 C262 382 272 381 292 382 C330 382 360 378 384 372 L424 398"/>
+      <path d="M262 388 C264 394 274 397 292 399 C330 404 370 412 406 428"/>
+      <path d="M424 398 L452 418 L434 450 L406 428" stroke-width="7"/>
+      <path d="M452 418 L520 462 M434 450 L486 520"/>
+    </g>
   </g>
 </svg>
