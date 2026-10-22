@@ -57,7 +57,7 @@ def get(url, headers=None, timeout=20, verify=True):
     """GET and return the decoded body. verify=False skips TLS checks (for sites with broken certs)."""
     h = {"User-Agent": UA, "Accept-Encoding": "gzip", "Accept-Language": "en-US,en;q=0.9"}
     h.update(headers or {})
-    ctx = None if verify else ssl._create_unverified_context()
+    ctx = None if verify else _legacy_tls()
     req = urllib.request.Request(url, headers=h)
     with urllib.request.urlopen(req, timeout=timeout, context=ctx) as r:
         body = r.read()
@@ -65,6 +65,18 @@ def get(url, headers=None, timeout=20, verify=True):
             body = gzip.decompress(body)
         charset = r.headers.get_content_charset() or "utf-8"
         return body.decode(charset, errors="replace")
+
+
+def _legacy_tls():
+    """For old sites (artcards): self-signed certificate, TLS 1.0 and ciphers that newer OpenSSL builds,
+    like GitHub's runners, refuse by default."""
+    ctx = ssl._create_unverified_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+    try:
+        ctx.set_ciphers("DEFAULT:@SECLEVEL=0")  # OpenSSL only; macOS's LibreSSL allows these already
+    except ssl.SSLError:
+        pass
+    return ctx
 
 
 def get_json(url, **kw):

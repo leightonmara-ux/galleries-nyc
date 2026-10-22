@@ -11,11 +11,13 @@ Wikipedia matches are kept only when the page describes an artist ("American por
 """
 import json
 import re
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
 WIKI = "https://en.wikipedia.org/w/api.php"
-UA = "OpeningsNYC/1.0 (personal gallery listings app; stdlib urllib)"
+UA = "OpeningsNYC/1.0 (https://github.com/leightonmara-ux/galleries-nyc; personal gallery listings)"
 ARTIST = re.compile(r"artist|painter|sculpt|photograph|printmaker|illustrat|ceramic|draft|draught|"
                     r"designer|filmmaker|video|install|mural|cartoon|duo|collective|potter|weaver|textile",
                     re.I)
@@ -45,10 +47,7 @@ def lookup(names):
         # Wikipedia hands out page views for a few pages at a time; follow "continue" for the rest.
         d, cont = {}, {}
         for _ in range(20):
-            req = urllib.request.Request(WIKI + "?" + urllib.parse.urlencode({**params, **cont}),
-                                         headers={"User-Agent": UA})
-            with urllib.request.urlopen(req, timeout=20) as r:
-                res = json.load(r)
+            res = _get(WIKI + "?" + urllib.parse.urlencode({**params, **cont}))
             q = res.get("query", {})
             for k in ("normalized", "redirects"):
                 d.setdefault(k, []).extend(x for x in q.get(k, []) if x not in d.get(k, []))
@@ -78,6 +77,20 @@ def lookup(names):
             found[n] = {"title": t, "description": p["description"], "views": views,
                         "url": "https://en.wikipedia.org/wiki/" + urllib.parse.quote(t.replace(" ", "_"))}
     return found
+
+
+def _get(url):
+    """GET JSON from Wikipedia, waiting and retrying when it says to slow down (it rate-limits the
+    shared servers GitHub Actions runs on)."""
+    for wait in (2, 5, 10, None):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Api-User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                return json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or wait is None:
+                raise
+            time.sleep(int(e.headers.get("Retry-After") or wait))
 
 
 def is_major(venue):

@@ -40,7 +40,11 @@ def scrape_one(name):
         return {**mod.SOURCE, "openings": found, "error": None, "secs": round(time.time() - t0, 1)}
     except Exception as e:
         traceback.print_exc()
-        return {"id": name, "name": name, "openings": [], "error": "%s: %s" % (type(e).__name__, e),
+        try:
+            info = importlib.import_module("sources." + name).SOURCE
+        except Exception:
+            info = {"id": name, "name": name, "url": None}
+        return {**info, "openings": [], "error": "%s: %s" % (type(e).__name__, e),
                 "secs": round(time.time() - t0, 1)}
 
 
